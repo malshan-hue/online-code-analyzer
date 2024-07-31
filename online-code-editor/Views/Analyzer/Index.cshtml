@@ -1,0 +1,43 @@
+﻿@{
+    ViewBag.Title = "Code Editor";
+}
+
+<h1>Code Editor</h1>
+
+<textarea id="codeEditor"></textarea>
+<div id="errors"></div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var editor = CodeMirror.fromTextArea(document.getElementById("codeEditor"), {
+                mode: "text/x-csharp",
+                lineNumbers: true
+            });
+
+            function checkSyntax() {
+                $.ajax({
+                    url: '/Analyzer/CheckSyntax',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(editor.getValue()),
+                    success: function (data) {
+                        $('#errors').empty();
+                        if (data.errors.length > 0) {
+                            data.errors.forEach(function (error) {
+                                $('#errors').append('<div>' + error + '</div>');
+                            });
+                        } else {
+                            $('#errors').append('<div>No syntax errors</div>');
+                        }
+                    }
+                });
+            }
+
+            editor.on('change', function () {
+                clearTimeout(window.checkSyntaxTimeout);
+                window.checkSyntaxTimeout = setTimeout(checkSyntax, 1000);
+            });
+        });
+    </script>
+}
